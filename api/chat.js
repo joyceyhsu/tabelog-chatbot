@@ -17,25 +17,32 @@ export default async function handler(req, res) {
   }));
 
   try {
-    // UPDATED TO GEMINI 2.0 FLASH
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    // We combine the system instruction into the contents for maximum compatibility
+    const payload = {
+      contents: [
+        {
+          role: "user", // In v1, we can pass the system prompt as the first user message
+          parts: [{ text: `SYSTEM INSTRUCTION: ${SYSTEM}` }]
+        },
+        ...geminiMessages
+      ],
+      generationConfig: { 
+        maxOutputTokens: 1000 
+      }
+    };
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        // Note: system_instruction works in v1 for 2.0 models
-        system_instruction: { parts: [{ text: SYSTEM }] },
-        contents: geminiMessages,
-        generationConfig: { maxOutputTokens: 1000 }
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
 
     if (data.error) throw new Error(data.error.message);
 
-    // Cleaner way to extract the text response
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't find results.";
 
     res.status(200).json({ reply });
@@ -44,4 +51,3 @@ export default async function handler(req, res) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-}
