@@ -33,7 +33,6 @@ When a user tells you their location and food preference:
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYSTEM }] },
           contents: geminiMessages,
-          tools: [{ google_search: {} }],
           generationConfig: { maxOutputTokens: 1000 }
         })
       }
