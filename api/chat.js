@@ -9,45 +9,53 @@ export default async function handler(req, res) {
   const { messages } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  const SYSTEM = `You are a helpful restaurant finder for Tabelog Hyakumeiten... (your prompt here)`;
+  const SYSTEM = `You are a helpful restaurant finder for Tabelog Hyakumeiten (食べログ百名店). 
+  1. Find 3–5 award winners close to the user's location.
+  2. For each: **name**, neighborhood, description, and Tabelog link.
+  3. Respond in English unless Japanese is used.`;
 
-  const geminiMessages = messages.map(m => ({
+  // Format messages for the Gemini API
+  const contents = messages.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }]
   }));
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  // Add system instruction as the very first message
+  contents.unshift({
+    role: 'user',
+    parts: [{ text: `INSTRUCTIONS: ${SYSTEM}` }]
+  });
 
-    // We combine the system instruction into the contents for maximum compatibility
-    const payload = {
-      contents: [
-        {
-          role: "user", // In v1, we can pass the system prompt as the first user message
-          parts: [{ text: `SYSTEM INSTRUCTION: ${SYSTEM}` }]
-        },
-        ...geminiMessages
-      ],
-      generationConfig: { 
-        maxOutputTokens: 1000 
-      }
-    };
+  try {
+    // The URL must be a clean string without extra commas or 'const' inside
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({
+        contents: contents,
+        generationConfig: { 
+          maxOutputTokens: 1000,
+          temperature: 0.7
+        }
+      })
     });
 
     const data = await response.json();
 
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't find results.";
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I couldn't find any recommendations right now.";
 
     res.status(200).json({ reply });
 
   } catch (err) {
-    console.error(err);
+    console.error("API Error:", err.message);
     res.status(500).json({ error: err.message });
   }
+}
