@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   try {
     // The URL must be a clean string without extra commas or 'const' inside
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite-001:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
