@@ -262,7 +262,7 @@
   const sendBtn = document.getElementById('send');
   const history = [];
 
-  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter'&& !e.isComposing) {handleSend(); }});
   function quickSend(t) { inputEl.value = t; handleSend(); }
   function scroll() { msgEl.scrollTop = msgEl.scrollHeight; }
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
